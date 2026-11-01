@@ -1184,15 +1184,22 @@ a.card:hover{transform:translate(-2px,-2px);box-shadow:8px 8px 0 var(--hi);color
     });
   }
 
-  // Real student reviews: the section is only built when real reviews exist
+  // Real student reviews: approved reviews from the database (the section appears only when there are some)
   const slot = document.querySelector("[data-reviews-slot]");
-  const T = (window.RGH_TESTIMONIALS && window.RGH_TESTIMONIALS.length ? window.RGH_TESTIMONIALS : C.testimonials) || [];
-  if (slot && T.length) {
-    slot.outerHTML = `<section class="s tint" id="reviews"><div class="wrap">
-      <div class="sec-head"><h2>What students say</h2></div>
-      <div class="reviews">${T.map(t => `<figure><blockquote>${esc(t.text)}</blockquote><figcaption>${esc(t.name)}${t.country ? ", " + esc(t.country) : ""}${t.service ? " · " + esc(t.service) : ""}</figcaption></figure>`).join("")}</div>
-      <p style="margin-top:22px"><a class="btn alt" href="review.html">Share your experience</a></p>
-    </div></section>`;
+  if (slot && C.supabase) {
+    fetch(C.supabase.url + "/rest/v1/rpc/approved_testimonials", {
+      method: "POST",
+      headers: { "apikey": C.supabase.anonKey, "Authorization": "Bearer " + C.supabase.anonKey, "Content-Type": "application/json" },
+      body: "{}"
+    }).then(r => (r.ok ? r.json() : [])).then(list => {
+      const T = Array.isArray(list) ? list : [];
+      if (!T.length) { slot.remove(); return; }
+      slot.outerHTML = `<section class="s tint" id="reviews"><div class="wrap">
+        <div class="sec-head"><h2>What students say</h2></div>
+        <div class="reviews">${T.map(t => `<figure><blockquote>${esc(t.body)}</blockquote><figcaption>${esc(t.name)}${t.country ? ", " + esc(t.country) : ""}${t.service ? " · " + esc(t.service) : ""}</figcaption></figure>`).join("")}</div>
+        <p style="margin-top:22px"><a class="btn alt" href="review.html">Share your experience</a></p>
+      </div></section>`;
+    }).catch(() => { slot.remove(); });
   } else if (slot) slot.remove();
 
   // Contact form: email app, Gmail in the browser, or copy

@@ -395,7 +395,7 @@ a.card:hover{transform:translate(-2px,-2px);box-shadow:8px 8px 0 var(--hi);color
 <body>
 <main class="wrap" style="max-width:980px;margin:0 auto;padding:20px 16px">
 <div class="topbar"><strong id="who">Staff</strong><span style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn sm alt" id="reload">Refresh</button><button class="btn sm alt" id="out">Sign out</button></span></div>
-<div class="tabs" id="tabs-wrap" hidden role="tablist"><button type="button" aria-selected="true" data-view="orders">Orders</button><button type="button" aria-selected="false" data-view="balances" data-admin>Finances</button><button type="button" aria-selected="false" data-view="access">Sample access</button><button type="button" aria-selected="false" data-view="samples" data-admin>Samples</button><button type="button" aria-selected="false" data-view="widgets" data-admin>Home page</button><button type="button" aria-selected="false" data-view="staff" data-admin>Staff</button></div>
+<div class="tabs" id="tabs-wrap" hidden role="tablist"><button type="button" aria-selected="true" data-view="orders">Orders</button><button type="button" aria-selected="false" data-view="balances" data-admin>Finances</button><button type="button" aria-selected="false" data-view="access">Sample access</button><button type="button" aria-selected="false" data-view="samples" data-admin>Samples</button><button type="button" aria-selected="false" data-view="widgets" data-admin>Home page</button><button type="button" aria-selected="false" data-view="testimonials">Testimonials</button><button type="button" aria-selected="false" data-view="staff" data-admin>Staff</button></div>
 <section id="v-orders"><h1 style="font-size:2rem">Orders by service</h1>
 <div id="chips" style="display:flex;gap:8px;flex-wrap:wrap;margin:0 0 14px"></div>
 <div class="two"><div class="f"><label>Show</label><select id="flt"><option value="attn">Needs attention</option><option value="all">All orders</option><option value="awaiting_quote">Quote requests</option><option value="awaiting_payment">Awaiting payment</option><option value="payment_reported">Payment reported</option><option value="in_progress">In progress</option><option value="revision_requested">Revision requested</option><option value="delivered">Delivered</option></select></div>
@@ -406,6 +406,7 @@ a.card:hover{transform:translate(-2px,-2px);box-shadow:8px 8px 0 var(--hi);color
 <section id="v-access" hidden></section>
 <section id="v-samples" hidden></section>
 <section id="v-widgets" hidden></section>
+<section id="v-testimonials" hidden></section>
 <section id="v-staff" hidden></section>
 </main>
 <script src="site-config.js"></script>
@@ -752,11 +753,63 @@ a.card:hover{transform:translate(-2px,-2px);box-shadow:8px 8px 0 var(--hi);color
     });
   }
 
+  /* ---------- testimonials (admin and staff): reviews sent online to approve, and testimonies you add ---------- */
+  const TSERV = ["Research support", "Essay guidance and model answers", "Data analysis guidance", "Reports, essays and business plans", "Dissertation or proposal support", "Editing and proofreading", "PowerPoint presentation", "Online coaching", "AI content removal", "Assignment guides", "Other"];
+  async function loadTestimonials() {
+    const box = $("#v-testimonials"); box.innerHTML = `<p class="muted">Loading...</p>`;
+    const { data, error } = await sb.from("testimonials").select("*").order("created_at", { ascending: false });
+    if (error) { box.innerHTML = `<p class="err">${esc(error.message)} (Did you run the round 33 testimonials SQL?)</p>`; return; }
+    const rows = data || [];
+    const waiting = rows.filter(t => t.status === "pending"), live = rows.filter(t => t.status === "approved");
+    const card = t => `<article class="order" data-tid="${esc(t.id)}" style="margin-top:8px">
+      <strong>${esc(t.name)}</strong>${t.country ? " &middot; " + esc(t.country) : ""}${t.service ? " &middot; " + esc(t.service) : ""}
+      <div class="small muted">${t.source === "manual" ? "Added by you" : "Sent from the website"}${t.email ? " &middot; " + esc(t.email) + " (private)" : ""} &middot; ${new Date(t.created_at).toLocaleDateString("en-GB")}</div>
+      <p style="white-space:pre-wrap;margin:8px 0">${esc(t.body)}</p>
+      <div>${t.status === "pending"
+        ? `<button type="button" class="btn sm" data-tact="approve">Approve and publish</button> <button type="button" class="btn sm alt" data-tact="reject">Reject</button>`
+        : `<button type="button" class="btn sm alt" data-tact="hide">Take off the site</button>`}
+        <button type="button" class="btn sm alt" data-tact="delete">Delete</button></div>
+      <p class="err"></p></article>`;
+    box.innerHTML = `<h1 style="font-size:2rem">Testimonials</h1>
+      <p class="muted">Two ways in. Reviews students send from the website wait in part 1 until you approve them. Testimonies a student gave you in person or by message go in part 2, once you have their consent.</p>
+      <h2 style="margin-top:22px">1. Reviews sent from the website (${waiting.length} waiting)</h2>
+      <div id="t-pending">${waiting.map(card).join("") || '<p class="muted">No reviews waiting.</p>'}</div>
+      <h2 style="margin-top:28px">2. Add a testimony from a student</h2>
+      <form id="t-form" class="panel" style="margin-bottom:18px">
+        <div class="two"><div class="f"><label>Student first name</label><input name="name" maxlength="60" required></div>
+        <div class="f"><label>Country</label><input name="country" maxlength="60" required></div></div>
+        <div class="f"><label>Service</label><select name="service">${TSERV.map(x => `<option>${esc(x)}</option>`).join("")}</select></div>
+        <div class="f"><label>What the student said (write it as they said it, or tidy the grammar only)</label><textarea name="body" rows="5" maxlength="1500" required></textarea></div>
+        <label style="font-weight:400"><input type="checkbox" name="consent" required> The student has agreed that Research Genius Hub may publish this with their first name and country.</label>
+        <p class="err"></p><button class="btn block" type="submit">Publish on the site</button></form>
+      <h2 style="margin-top:28px">On the site now (${live.length})</h2>
+      <div id="t-live">${live.map(card).join("") || '<p class="muted">Nothing published yet.</p>'}</div>`;
+    const form = $("#t-form");
+    form.addEventListener("submit", async e => {
+      e.preventDefault(); const btn = form.querySelector("button"), err = form.querySelector(".err"); err.textContent = "";
+      if (!form.consent.checked) { err.textContent = "Tick the consent box first."; return; }
+      btn.disabled = true;
+      const r = await sb.from("testimonials").insert({ name: form.name.value.trim(), country: form.country.value.trim(), service: form.service.value, body: form.body.value.trim(), email: "", status: "approved", source: "manual", consent_confirmed: true, approved_at: new Date().toISOString() });
+      if (r.error) { err.textContent = r.error.message; btn.disabled = false; return; }
+      loadTestimonials();
+    });
+    box.addEventListener("click", async e => {
+      const t = e.target.closest("[data-tact]"); if (!t) return;
+      const id = t.closest("[data-tid]").dataset.tid, err = t.closest("article").querySelector(".err"); err.textContent = "";
+      let r;
+      if (t.dataset.tact === "approve") r = await sb.from("testimonials").update({ status: "approved", approved_at: new Date().toISOString() }).eq("id", id);
+      if (t.dataset.tact === "reject" || t.dataset.tact === "hide") r = await sb.from("testimonials").update({ status: "rejected" }).eq("id", id);
+      if (t.dataset.tact === "delete") { if (!confirm("Delete this testimony permanently?")) return; r = await sb.from("testimonials").delete().eq("id", id); }
+      if (r && r.error) { err.textContent = r.error.message; return; }
+      loadTestimonials();
+    });
+  }
+
   /* ---------- staff management (admin only) ---------- */
   document.querySelectorAll("[data-view]").forEach(b => b.addEventListener("click", () => {
     document.querySelectorAll("[data-view]").forEach(x => x.setAttribute("aria-selected", x === b));
-    ["orders", "balances", "access", "samples", "staff", "widgets"].forEach(v => { $("#v-" + v).hidden = b.dataset.view !== v; });
-    if (b.dataset.view === "staff") loadStaff(); if (b.dataset.view === "samples") loadSamples(); if (b.dataset.view === "access") loadAccess(); if (b.dataset.view === "balances") loadBalances(); if (b.dataset.view === "widgets") loadWidgets();
+    ["orders", "balances", "access", "samples", "staff", "widgets", "testimonials"].forEach(v => { $("#v-" + v).hidden = b.dataset.view !== v; });
+    if (b.dataset.view === "staff") loadStaff(); if (b.dataset.view === "samples") loadSamples(); if (b.dataset.view === "access") loadAccess(); if (b.dataset.view === "balances") loadBalances(); if (b.dataset.view === "widgets") loadWidgets(); if (b.dataset.view === "testimonials") loadTestimonials();
   }));
   /* ---------- samples (admin) and sample access codes (admin + staff) ---------- */
   const LEVELS = ["Certificate", "Diploma", "Undergraduate", "Postgraduate diploma", "Masters", "PhD"];

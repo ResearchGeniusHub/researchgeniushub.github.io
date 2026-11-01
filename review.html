@@ -411,11 +411,26 @@ a.card:hover{transform:translate(-2px,-2px);box-shadow:8px 8px 0 var(--hi);color
 </div></section>
 <script>
 document.addEventListener("DOMContentLoaded", function () {
-  var C = window.RGH || {}, f = document.getElementById("review-form");
-  f.action = "https://formsubmit.co/" + C.email;
-  function add(k, v) { var i = document.createElement("input"); i.type = "hidden"; i.name = k; i.value = v; f.appendChild(i); }
-  add("_subject", "New review to approve"); add("_template", "table"); add("_captcha", "false");
-  add("_next", location.origin + location.pathname.replace(/[^/]*$/, "") + "thanks.html?review=1");
+  var C = window.RGH || {}, f = document.getElementById("review-form"), err = document.getElementById("r-err"), btn = document.getElementById("r-send");
+  if (!f || !C.supabase) return;
+  function val(n) { return f.elements[n] ? f.elements[n].value : ""; }
+  f.addEventListener("submit", async function (e) {
+    e.preventDefault(); err.textContent = "";
+    if (val("_honey")) return;
+    btn.disabled = true; btn.textContent = "Sending...";
+    try {
+      var r = await fetch(C.supabase.url + "/rest/v1/rpc/submit_review", {
+        method: "POST",
+        headers: { "apikey": C.supabase.anonKey, "Authorization": "Bearer " + C.supabase.anonKey, "Content-Type": "application/json" },
+        body: JSON.stringify({ p_name: val("name"), p_country: val("country"), p_service: val("service"), p_body: val("review"), p_email: val("email"), p_consent: document.getElementById("r-ok").checked })
+      });
+      if (!r.ok) { var m = ""; try { m = (await r.json()).message || ""; } catch (x) {} throw new Error(m || "Your review could not be sent. Please try again."); }
+      window.location.href = "thanks.html?review=1";
+    } catch (x) {
+      err.textContent = x.message || "Your review could not be sent. Please try again.";
+      btn.disabled = false; btn.textContent = "Send my review";
+    }
+  });
 });
 </script>
 </section>
@@ -1011,15 +1026,22 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
-  // Real student reviews: the section is only built when real reviews exist
+  // Real student reviews: approved reviews from the database (the section appears only when there are some)
   const slot = document.querySelector("[data-reviews-slot]");
-  const T = (window.RGH_TESTIMONIALS && window.RGH_TESTIMONIALS.length ? window.RGH_TESTIMONIALS : C.testimonials) || [];
-  if (slot && T.length) {
-    slot.outerHTML = `<section class="s tint" id="reviews"><div class="wrap">
-      <div class="sec-head"><h2>What students say</h2></div>
-      <div class="reviews">${T.map(t => `<figure><blockquote>${esc(t.text)}</blockquote><figcaption>${esc(t.name)}${t.country ? ", " + esc(t.country) : ""}${t.service ? " · " + esc(t.service) : ""}</figcaption></figure>`).join("")}</div>
-      <p style="margin-top:22px"><a class="btn alt" href="review.html">Share your experience</a></p>
-    </div></section>`;
+  if (slot && C.supabase) {
+    fetch(C.supabase.url + "/rest/v1/rpc/approved_testimonials", {
+      method: "POST",
+      headers: { "apikey": C.supabase.anonKey, "Authorization": "Bearer " + C.supabase.anonKey, "Content-Type": "application/json" },
+      body: "{}"
+    }).then(r => (r.ok ? r.json() : [])).then(list => {
+      const T = Array.isArray(list) ? list : [];
+      if (!T.length) { slot.remove(); return; }
+      slot.outerHTML = `<section class="s tint" id="reviews"><div class="wrap">
+        <div class="sec-head"><h2>What students say</h2></div>
+        <div class="reviews">${T.map(t => `<figure><blockquote>${esc(t.body)}</blockquote><figcaption>${esc(t.name)}${t.country ? ", " + esc(t.country) : ""}${t.service ? " · " + esc(t.service) : ""}</figcaption></figure>`).join("")}</div>
+        <p style="margin-top:22px"><a class="btn alt" href="review.html">Share your experience</a></p>
+      </div></section>`;
+    }).catch(() => { slot.remove(); });
   } else if (slot) slot.remove();
 
   // Contact form: email app, Gmail in the browser, or copy
