@@ -442,6 +442,12 @@ a.card:hover{transform:translate(-2px,-2px);box-shadow:8px 8px 0 var(--hi);color
 .hw-slides img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .6s ease}
 .hw-slides img.on{opacity:1}
 .hw-slides img{cursor:pointer;pointer-events:none}
+.hero-show{position:relative;width:100%;max-width:560px;margin:0 0 0 auto}
+.hero2 .scene-slides img{object-fit:contain;background:#0F1B33;border-radius:18px}
+.hero2 .scene-slides{width:100%;aspect-ratio:520/400;border-radius:18px;background:#fff;box-shadow:0 34px 70px rgba(0,0,0,.45);transform:rotate(-1.5deg);transition:transform .4s ease}
+.hero2 .scene-slides:hover{transform:rotate(0deg)}
+.hero-show .hw-dots button{background:rgba(255,255,255,.35)}
+.hero-show .hw-dots button[aria-current="true"]{background:#F5C84C}
 .hw-slides img.on{pointer-events:auto}
 .hw-nav{position:absolute;top:50%;transform:translateY(-50%);z-index:2;width:38px;height:38px;border-radius:50%;border:0;background:rgba(0,0,0,.45);color:#fff;font-size:24px;line-height:1;cursor:pointer}
 .hw-prev{left:8px}.hw-next{right:8px}
@@ -472,13 +478,6 @@ a.card:hover{transform:translate(-2px,-2px);box-shadow:8px 8px 0 var(--hi);color
     <div class="h2-visual"><span class="h2-badge">Academic integrity is our priority</span><img class="scene" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MjAgNDAwIiByb2xlPSJpbWciIGFyaWEtbGFiZWw9IkFuaW1hdGVkIGlsbHVzdHJhdGlvbiBvZiBhIGRyYWZ0IGJlaW5nIHdyaXR0ZW4gYW5kIGhpZ2hsaWdodGVkIHdoaWxlIGEgYmFyIGNoYXJ0IGdyb3dzIGFuZCBhIHRyZW5kIGxpbmUgaXMgZHJhd24iPgo8c3R5bGU+Ci50e2ZvbnQtZmFtaWx5Okdlb3JnaWEsJ1RpbWVzIE5ldyBSb21hbicsc2VyaWZ9Ci5ze2ZvbnQtZmFtaWx5OnN5c3RlbS11aSwtYXBwbGUtc3lzdGVtLCdTZWdvZSBVSScsQXJpYWwsc2Fucy1zZXJpZn0KLndye3RyYW5zZm9ybS1ib3g6ZmlsbC1ib3g7dHJhbnNmb3JtLW9yaWdpbjowIDUwJTthbmltYXRpb246d3IgOHMgZWFzZS1pbi1vdXQgaW5maW5pdGV9Ci5ncm93e3RyYW5zZm9ybS1ib3g6ZmlsbC1ib3g7dHJhbnNmb3JtLW9yaWdpbjo1MCUgMTAwJTthbmltYXRpb246Z3JvdyA4cyBlYXNlLWluLW91dCBpbmZpbml0ZX0KLmRyYXd7c3Ryb2tlLWRhc2hhcnJheToyNjA7c3Ryb2tlLWRhc2hvZmZzZXQ6MDthbmltYXRpb246ZHJhdyA4cyBlYXNlLWluLW91dCBpbmZpbml0ZX0KLmZse2FuaW1hdGlvbjpmbCA0LjVzIGVhc2UtaW4tb3V0IGluZmluaXRlfQoubm90ZXthbmltYXRpb246bm90ZSA4cyBlYXNlLWluLW91dCBpbmZpbml0ZX0KLnBvcHt0cmFuc2Zvcm0tYm94OmZpbGwtYm94O3RyYW5zZm9ybS1vcmlnaW46NTAlIDUwJTthbmltYXRpb246cG9wIDhzIGVhc2UtaW4tb3V0IGluZmluaXRlfQoucHVsc2V7dHJhbnNmb3JtLWJveDpmaWxsLWJveDt0cmFuc2Zvcm0tb3JpZ2luOjUwJSA1MCU7YW5pbWF0aW9uOnB1bHNlIDEuNnMgZWFzZS1pbi1vdXQgaW5maW5pdGV9CkBrZXlmcmFtZXMgd3J7MCUsNCV7dHJhbnNmb3JtOnNjYWxlWCgwKX0yNiUsOTAle3RyYW5zZm9ybTpzY2FsZVgoMSl9MTAwJXt0cmFuc2Zvcm06c2NhbGVYKDApfX0KQGtleWZyYW1lcyBncm93ezAlLDEwJXt0cmFuc2Zvcm06c2NhbGVZKDApfTMyJSw5MCV7dHJhbnNmb3JtOnNjYWxlWSgxKX0xMDAle3RyYW5zZm9ybTpzY2FsZVkoMCl9fQpAa2V5ZnJhbWVzIGRyYXd7MCUsMjgle3N0cm9rZS1kYXNob2Zmc2V0OjI2MH01OCUsOTAle3N0cm9rZS1kYXNob2Zmc2V0OjB9MTAwJXtzdHJva2UtZGFzaG9mZnNldDoyNjB9fQpAa2V5ZnJhbWVzIGZsezAlLDEwMCV7dHJhbnNmb3JtOnRyYW5zbGF0ZVkoMCl9NTAle3RyYW5zZm9ybTp0cmFuc2xhdGVZKC03cHgpfX0KQGtleWZyYW1lcyBub3RlezAlLDM0JXtvcGFjaXR5OjB9NDIlLDkwJXtvcGFjaXR5OjF9MTAwJXtvcGFjaXR5OjB9fQpAa2V5ZnJhbWVzIHBvcHswJSw2NiV7dHJhbnNmb3JtOnNjYWxlKDApIHJvdGF0ZSgtMjBkZWcpfTc0JXt0cmFuc2Zvcm06c2NhbGUoMS4yNSkgcm90YXRlKC0xMmRlZyl9ODAlLDkyJXt0cmFuc2Zvcm06c2NhbGUoMSkgcm90YXRlKC0xMmRlZyl9MTAwJXt0cmFuc2Zvcm06c2NhbGUoMCkgcm90YXRlKC0yMGRlZyl9fQpAa2V5ZnJhbWVzIHB1bHNlezAlLDEwMCV7dHJhbnNmb3JtOnNjYWxlKDEpfTUwJXt0cmFuc2Zvcm06c2NhbGUoMS4zNSl9fQpAbWVkaWEgKHByZWZlcnMtcmVkdWNlZC1tb3Rpb246cmVkdWNlKXsKICp7YW5pbWF0aW9uOm5vbmUhaW1wb3J0YW50fQogLndyLC5ncm93e3RyYW5zZm9ybTpub25lfS5kcmF3e3N0cm9rZS1kYXNob2Zmc2V0OjB9Lm5vdGV7b3BhY2l0eToxfS5wb3B7dHJhbnNmb3JtOnJvdGF0ZSgtMTJkZWcpfQp9Cjwvc3R5bGU+CjxyZWN0IHg9IjE2IiB5PSIxNiIgd2lkdGg9IjUwMCIgaGVpZ2h0PSIzODAiIHJ4PSIxNCIgZmlsbD0iI0ZGRTQ1QyIvPgo8cmVjdCB4PSI2IiB5PSI2IiB3aWR0aD0iNTAwIiBoZWlnaHQ9IjM4MCIgcng9IjE0IiBmaWxsPSIjZmZmIiBzdHJva2U9IiMwRjFCMzMiIHN0cm9rZS13aWR0aD0iMyIvPgo8IS0tIHBhcGVyIC0tPgo8cmVjdCB4PSIyOCIgeT0iMzAiIHdpZHRoPSIyMjYiIGhlaWdodD0iMzMwIiByeD0iNiIgZmlsbD0iI0Y2RjdGQSIgc3Ryb2tlPSIjMEYxQjMzIiBzdHJva2Utd2lkdGg9IjIiLz4KPHJlY3QgY2xhc3M9IndyIiB4PSI0NCIgeT0iNTAiIHdpZHRoPSIxMzAiIGhlaWdodD0iMTEiIHJ4PSIzIiBmaWxsPSIjMEYxQjMzIi8+CjxyZWN0IGNsYXNzPSJ3ciIgc3R5bGU9ImFuaW1hdGlvbi1kZWxheTouMTVzIiB4PSI0NCIgeT0iODAiIHdpZHRoPSIxOTIiIGhlaWdodD0iNiIgcng9IjMiIGZpbGw9IiM5QUE1QkEiLz4KPHJlY3QgY2xhc3M9IndyIiBzdHlsZT0iYW5pbWF0aW9uLWRlbGF5Oi4zcyIgeD0iNDQiIHk9Ijk4IiB3aWR0aD0iMTc2IiBoZWlnaHQ9IjYiIHJ4PSIzIiBmaWxsPSIjOUFBNUJBIi8+CjxyZWN0IGNsYXNzPSJ3ciIgc3R5bGU9ImFuaW1hdGlvbi1kZWxheToxLjFzIiB4PSI0MCIgeT0iMTExIiB3aWR0aD0iMjA0IiBoZWlnaHQ9IjE2IiByeD0iMiIgZmlsbD0iI0ZGRTQ1QyIvPgo8cmVjdCBjbGFzcz0id3IiIHN0eWxlPSJhbmltYXRpb24tZGVsYXk6LjQ1cyIgeD0iNDQiIHk9IjExNiIgd2lkdGg9IjEwMCIgaGVpZ2h0PSI2IiByeD0iMyIgZmlsbD0iIzQ2NTI2QiIvPgo8cmVjdCBjbGFzcz0id3IiIHN0eWxlPSJhbmltYXRpb24tZGVsYXk6LjZzIiB4PSI0NCIgeT0iMTM0IiB3aWR0aD0iMTUwIiBoZWlnaHQ9IjYiIHJ4PSIzIiBmaWxsPSIjOUFBNUJBIi8+CjxyZWN0IGNsYXNzPSJ3ciIgc3R5bGU9ImFuaW1hdGlvbi1kZWxheTouNzVzIiB4PSI0NCIgeT0iMTUyIiB3aWR0aD0iMTkyIiBoZWlnaHQ9IjYiIHJ4PSIzIiBmaWxsPSIjOUFBNUJBIi8+CjxyZWN0IGNsYXNzPSJ3ciIgc3R5bGU9ImFuaW1hdGlvbi1kZWxheTouOXMiIHg9IjQ0IiB5PSIxNzAiIHdpZHRoPSIxODIiIGhlaWdodD0iNiIgcng9IjMiIGZpbGw9IiM5QUE1QkEiLz4KPHJlY3QgY2xhc3M9IndyIiBzdHlsZT0iYW5pbWF0aW9uLWRlbGF5OjEuMDVzIiB4PSI0NCIgeT0iMTg4IiB3aWR0aD0iMTIwIiBoZWlnaHQ9IjYiIHJ4PSIzIiBmaWxsPSIjOUFBNUJBIi8+CjxyZWN0IGNsYXNzPSJ3ciIgc3R5bGU9ImFuaW1hdGlvbi1kZWxheToxLjJzIiB4PSI0NCIgeT0iMjE0IiB3aWR0aD0iMTkyIiBoZWlnaHQ9IjYiIHJ4PSIzIiBmaWxsPSIjOUFBNUJBIi8+CjxyZWN0IGNsYXNzPSJ3ciIgc3R5bGU9ImFuaW1hdGlvbi1kZWxheToxLjM1cyIgeD0iNDQiIHk9IjIzMiIgd2lkdGg9IjE3MCIgaGVpZ2h0PSI2IiByeD0iMyIgZmlsbD0iIzlBQTVCQSIvPgo8cmVjdCBjbGFzcz0id3IiIHN0eWxlPSJhbmltYXRpb24tZGVsYXk6MS41cyIgeD0iNDQiIHk9IjI1MCIgd2lkdGg9IjE5MiIgaGVpZ2h0PSI2IiByeD0iMyIgZmlsbD0iIzlBQTVCQSIvPgo8cmVjdCBjbGFzcz0id3IiIHN0eWxlPSJhbmltYXRpb24tZGVsYXk6MS42NXMiIHg9IjQ0IiB5PSIyNjgiIHdpZHRoPSI5NiIgaGVpZ2h0PSI2IiByeD0iMyIgZmlsbD0iIzlBQTVCQSIvPgo8dGV4dCBjbGFzcz0ibm90ZSB0IiB4PSIxNTIiIHk9IjEyNSIgZm9udC1zaXplPSIxNCIgZm9udC1zdHlsZT0iaXRhbGljIiBmaWxsPSIjQzAzMDNDIiB0cmFuc2Zvcm09InJvdGF0ZSgtMyAxNTIgMTI1KSI+YWRkIGEgc291cmNlPC90ZXh0Pgo8ZyBjbGFzcz0iZmwiPjxyZWN0IHg9IjQ0IiB5PSIzMDQiIHdpZHRoPSIxMTgiIGhlaWdodD0iMjgiIHJ4PSIxNCIgZmlsbD0iI2ZmZiIgc3Ryb2tlPSIjMEU3Qzg2IiBzdHJva2Utd2lkdGg9IjIiLz48dGV4dCBjbGFzcz0icyIgeD0iMTAzIiB5PSIzMjMiIGZvbnQtc2l6ZT0iMTMiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiMwQTVCNjMiIGZvbnQtd2VpZ2h0PSI2MDAiPihTbWl0aCwgMjAyMSk8L3RleHQ+PC9nPgo8IS0tIGJhciBjaGFydCAtLT4KPHJlY3QgeD0iMjc2IiB5PSIzMCIgd2lkdGg9IjIyNCIgaGVpZ2h0PSIxNjAiIHJ4PSI4IiBmaWxsPSIjZmZmIiBzdHJva2U9IiNEOERERTgiIHN0cm9rZS13aWR0aD0iMiIvPgo8dGV4dCBjbGFzcz0icyIgeD0iMjkyIiB5PSI1NCIgZm9udC1zaXplPSIxMiIgZm9udC13ZWlnaHQ9IjcwMCIgZmlsbD0iIzBBNUI2MyI+U1BTUyByZXN1bHRzPC90ZXh0Pgo8bGluZSB4MT0iMjkyIiB5MT0iMTY2IiB4Mj0iNDg0IiB5Mj0iMTY2IiBzdHJva2U9IiMwRjFCMzMiIHN0cm9rZS13aWR0aD0iMiIvPgo8cmVjdCBjbGFzcz0iZ3JvdyIgeD0iMzAyIiB5PSIxMjYiIHdpZHRoPSIyMiIgaGVpZ2h0PSI0MCIgZmlsbD0iIzBFN0M4NiIvPgo8cmVjdCBjbGFzcz0iZ3JvdyIgc3R5bGU9ImFuaW1hdGlvbi1kZWxheTouMTVzIiB4PSIzMzQiIHk9IjEwNiIgd2lkdGg9IjIyIiBoZWlnaHQ9IjYwIiBmaWxsPSIjMEU3Qzg2Ii8+CjxyZWN0IGNsYXNzPSJncm93IiBzdHlsZT0iYW5pbWF0aW9uLWRlbGF5Oi4zcyIgeD0iMzY2IiB5PSIxMTYiIHdpZHRoPSIyMiIgaGVpZ2h0PSI1MCIgZmlsbD0iIzBFN0M4NiIvPgo8cmVjdCBjbGFzcz0iZ3JvdyIgc3R5bGU9ImFuaW1hdGlvbi1kZWxheTouNDVzIiB4PSIzOTgiIHk9Ijg2IiB3aWR0aD0iMjIiIGhlaWdodD0iODAiIGZpbGw9IiMwRTdDODYiLz4KPHJlY3QgY2xhc3M9Imdyb3ciIHN0eWxlPSJhbmltYXRpb24tZGVsYXk6LjZzIiB4PSI0MzAiIHk9IjY4IiB3aWR0aD0iMjIiIGhlaWdodD0iOTgiIGZpbGw9IiMwRjFCMzMiLz4KPCEtLSBsaW5lIGNoYXJ0IC0tPgo8cmVjdCB4PSIyNzYiIHk9IjIwNiIgd2lkdGg9IjIyNCIgaGVpZ2h0PSIxNTQiIHJ4PSI4IiBmaWxsPSIjZmZmIiBzdHJva2U9IiNEOERERTgiIHN0cm9rZS13aWR0aD0iMiIvPgo8dGV4dCBjbGFzcz0icyIgeD0iMjkyIiB5PSIyMzAiIGZvbnQtc2l6ZT0iMTIiIGZvbnQtd2VpZ2h0PSI3MDAiIGZpbGw9IiMwQTVCNjMiPkZpbmRpbmdzPC90ZXh0Pgo8bGluZSB4MT0iMjkyIiB5MT0iMjQwIiB4Mj0iMjkyIiB5Mj0iMzQwIiBzdHJva2U9IiMwRjFCMzMiIHN0cm9rZS13aWR0aD0iMiIvPgo8bGluZSB4MT0iMjkyIiB5MT0iMzQwIiB4Mj0iNDg0IiB5Mj0iMzQwIiBzdHJva2U9IiMwRjFCMzMiIHN0cm9rZS13aWR0aD0iMiIvPgo8cGF0aCBjbGFzcz0iZHJhdyIgZD0iTTI5OCAzMjQgTDMzMiAzMDggTDM2MiAzMTQgTDM5NCAyODQgTDQyNiAyNzQgTDQ2MiAyNTAiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzBFN0M4NiIgc3Ryb2tlLXdpZHRoPSI0IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz4KPGNpcmNsZSBjbGFzcz0icHVsc2UiIGN4PSI0NjIiIGN5PSIyNTAiIHI9IjYiIGZpbGw9IiNGRkU0NUMiIHN0cm9rZT0iIzBGMUIzMyIgc3Ryb2tlLXdpZHRoPSIyIi8+Cjx0ZXh0IGNsYXNzPSJ0IiB4PSIzNTIiIHk9IjI2MiIgZm9udC1zaXplPSIxNSIgZm9udC1zdHlsZT0iaXRhbGljIiBmaWxsPSIjMEYxQjMzIj5wICZsdDsgLjA1PC90ZXh0Pgo8IS0tIHJlZCBwZW4gZ3JhZGUgLS0+CjxnIGNsYXNzPSJwb3AiPjxjaXJjbGUgY3g9IjI0NiIgY3k9IjQ4IiByPSIyMyIgZmlsbD0iI2ZmZiIgc3Ryb2tlPSIjQzAzMDNDIiBzdHJva2Utd2lkdGg9IjMiLz48dGV4dCBjbGFzcz0idCIgeD0iMjQ2IiB5PSI1NyIgZm9udC1zaXplPSIyNiIgZm9udC13ZWlnaHQ9IjcwMCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0iI0MwMzAzQyI+QTwvdGV4dD48L2c+Cjwvc3ZnPgo=" alt="Illustration of a research draft with citations, SPSS results and findings"></div>
   </div>
 </section>
-<section class="home-widgets" id="home-widgets" hidden aria-label="Today on Research Genius Hub">
-  <div class="wrap">
-    <p class="hw-tag">Today on Research Genius Hub</p>
-    <div class="hw-grid" id="hw-grid"></div>
-  </div>
-</section>
-
 <div class="statbar"><div class="wrap">
   <div><b>10 years</b><span>of academic writing guidance and support</span></div>
   <div><b>Every level</b><span>Certificates, diplomas, postgraduate diplomas, degrees, Masters and PhD</span></div>
@@ -1238,94 +1237,57 @@ a.card:hover{transform:translate(-2px,-2px);box-shadow:8px 8px 0 var(--hi);color
 
 </script>
 <script>
-/* Home widgets: daily image, videos and text cards managed from the Admin page. */
+/* Home page picture: the first live slideshow in the Admin widget list replaces the illustration.
+   One slide shows at a time; each changes after its time (default 30 s). Press the picture to pause or resume. */
 (function () {
   var C = window.RGH || {}, SB = C.supabase || {};
-  var sec = document.getElementById("home-widgets"), grid = document.getElementById("hw-grid");
-  if (!sec || !grid || !SB.url || !SB.anonKey) return;
+  var img = document.querySelector(".hero2 .scene");
+  if (!img || !SB.url || !SB.anonKey) return;
   function esc(t) { return String(t == null ? "" : t).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
   function safeUrl(u) { try { var x = new URL(u, location.href); return (x.protocol === "https:" || x.protocol === "http:") ? x.href : ""; } catch (e) { return ""; } }
-  function embed(u) {
-    var m = u.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/shorts\/)([\w-]{6,})/);
-    if (m) return "https://www.youtube-nocookie.com/embed/" + m[1];
-    m = u.match(/vimeo\.com\/(?:video\/)?(\d+)/);
-    return m ? "https://player.vimeo.com/video/" + m[1] : "";
-  }
+  function clamp(v, lo, hi) { return Math.min(hi, Math.max(lo, v)); }
   var d = new Date(), today = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
   var live = function (r) { return (!r.show_from || r.show_from <= today) && (!r.show_until || r.show_until >= today); };
-  fetch(SB.url + "/rest/v1/site_widgets?select=*,slides:site_widget_slides(media_url,position,seconds)&active=eq.true&order=position.asc,created_at.desc", { headers: { apikey: SB.anonKey, Authorization: "Bearer " + SB.anonKey } })
+  fetch(SB.url + "/rest/v1/site_widgets?select=*,slides:site_widget_slides(media_url,position,seconds)&kind=eq.slideshow&active=eq.true&order=position.asc,created_at.desc", { headers: { apikey: SB.anonKey, Authorization: "Bearer " + SB.anonKey } })
     .then(function (r) { return r.ok ? r.json() : []; })
     .then(function (rows) {
-      rows = (rows || []).filter(live).map(function (r) {
-        r.slides = (r.slides || []).slice().sort(function (x, y) { return x.position - y.position; });
-        return r;
-      });
-      var dailyImage = rows.filter(function (r) { return r.kind === "image" && r.media_url; })
-        .sort(function (a, b) { return String(b.show_from || "").localeCompare(String(a.show_from || "")); })[0];
-      // home page order = Position set in admin (lowest first); the daily image is the latest live one
-      var pick = rows.filter(function (r) {
-        if (r.kind === "slideshow") return r.slides.length > 0;
-        if (r.kind === "image") return r === dailyImage;
-        if (r.kind === "video") return !!r.media_url;
-        return r.kind === "text";
-      }).slice(0, 8);
-      if (!pick.length) return;
-      grid.innerHTML = pick.map(function (r) {
-        var link = r.link_url ? safeUrl(r.link_url) : "";
-        var lbl = esc(r.link_label || "Read more");
-        var tail = link ? '<a class="hw-link" href="' + esc(link) + '" target="_blank" rel="noopener">' + lbl + " &rarr;</a>" : "";
-        var body = '<div class="hw-body">' + (r.title ? "<h3>" + esc(r.title) + "</h3>" : "") + (r.body ? "<p>" + esc(r.body) + "</p>" : "") + tail + "</div>";
-        if (r.kind === "slideshow") {
-          var kept = r.slides.filter(function (x) { return safeUrl(x.media_url); });
-          var srcs = kept.map(function (x) { return safeUrl(x.media_url); });
-          if (!srcs.length) return "";
-          var secs = Math.min(300, Math.max(2, Number(r.slide_seconds) || 30));
-          var durs = kept.map(function (x) { return Math.min(300, Math.max(2, Number(x.seconds) || secs)) * 1000; }).join(",");
-          var imgs = srcs.map(function (u, k) { return '<img src="' + esc(u) + '" alt="' + esc((r.title || "Slideshow") + " (" + (k + 1) + " of " + srcs.length + ")") + '" loading="lazy"' + (k === 0 ? ' class="on"' : "") + ">"; }).join("");
-          var nav = srcs.length > 1 ? '<button type="button" class="hw-nav hw-prev" aria-label="Previous slide">&#8249;</button><button type="button" class="hw-nav hw-next" aria-label="Next slide">&#8250;</button>' : "";
-          var dots = srcs.length > 1 ? '<div class="hw-dots">' + srcs.map(function (u, k) { return '<button type="button" aria-label="Slide ' + (k + 1) + '"></button>'; }).join("") + "</div>" : "";
-          return '<figure class="hw-card"><div class="hw-slides" data-durs="' + durs + '">' + imgs + nav + "</div>" + dots + body + "</figure>";
-        }
-        if (r.kind === "image") {
-          var src = safeUrl(r.media_url);
-          if (!src) return "";
-          return '<figure class="hw-card"><img src="' + esc(src) + '" alt="' + esc(r.title || "Daily image") + '" loading="lazy">' + body + "</figure>";
-        }
-        if (r.kind === "video") {
-          var e = embed(r.media_url);
-          if (e) return '<figure class="hw-card"><iframe src="' + esc(e) + '" title="' + esc(r.title || "Video") + '" loading="lazy" allow="accelerometer; encrypted-media; picture-in-picture" allowfullscreen></iframe>' + body + "</figure>";
-          var v = safeUrl(r.media_url);
-          if (!v) return "";
-          return '<figure class="hw-card"><video controls preload="metadata" playsinline src="' + esc(v) + '"></video>' + body + "</figure>";
-        }
-        return '<article class="hw-card hw-card--text">' + body + "</article>";
+      var show = (rows || []).filter(live).filter(function (r) { return r.slides && r.slides.length; })[0];
+      if (!show) return;                                   // no live slideshow: the illustration stays
+      var kept = show.slides.slice().sort(function (x, y) { return x.position - y.position; })
+        .filter(function (x) { return safeUrl(x.media_url); });
+      if (!kept.length) return;
+      var secs = clamp(Number(show.slide_seconds) || 30, 2, 300);
+      var durs = kept.map(function (x) { return clamp(Number(x.seconds) || secs, 2, 300) * 1000; }).join(",");
+      var imgs = kept.map(function (x, k) {
+        return '<img src="' + esc(safeUrl(x.media_url)) + '" alt="' + esc((show.title || "Research Genius Hub") + " (" + (k + 1) + " of " + kept.length + ")") + '"' + (k === 0 ? ' class="on"' : "") + ">";
       }).join("");
-      // slideshows: change slide automatically (each slide has its own time, default 30 s).
-      // Pressing a slide pauses it; pressing again resumes. Arrows and dots always work.
-      grid.querySelectorAll(".hw-slides").forEach(function (box) {
-        var fig = box.parentNode, imgs = box.querySelectorAll("img"), dots = fig.querySelectorAll(".hw-dots button");
-        if (imgs.length < 2) return;
-        var durs = String(box.getAttribute("data-durs") || "").split(",").map(Number);
-        var n = 0, timer = null, paused = false;
-        var show = function (k) {
-          n = (k + imgs.length) % imgs.length;
-          for (var j = 0; j < imgs.length; j++) imgs[j].classList.toggle("on", j === n);
-          for (var q = 0; q < dots.length; q++) dots[q].setAttribute("aria-current", q === n ? "true" : "false");
-        };
-        var tick = function () {
-          clearTimeout(timer); timer = null;
-          if (!paused) timer = setTimeout(function () { show(n + 1); tick(); }, durs[n] || 30000);
-        };
-        var prev = fig.querySelector(".hw-prev"), next = fig.querySelector(".hw-next");
-        if (prev) prev.addEventListener("click", function () { show(n - 1); tick(); });
-        if (next) next.addEventListener("click", function () { show(n + 1); tick(); });
-        dots.forEach(function (d, k) { d.addEventListener("click", function () { show(k); tick(); }); });
-        box.addEventListener("click", function (e) { if (e.target.tagName === "IMG") { paused = !paused; tick(); } });
-        show(0); tick();
-      });
-      sec.hidden = false;
+      var multi = kept.length > 1;
+      var nav = multi ? '<button type="button" class="hw-nav hw-prev" aria-label="Previous slide">&#8249;</button><button type="button" class="hw-nav hw-next" aria-label="Next slide">&#8250;</button>' : "";
+      var dots = multi ? '<div class="hw-dots">' + kept.map(function (x, k) { return '<button type="button" aria-label="Slide ' + (k + 1) + '"></button>'; }).join("") + "</div>" : "";
+      img.style.display = "none";
+      img.insertAdjacentHTML("afterend", '<div class="hero-show"><div class="hw-slides scene-slides" data-durs="' + durs + '">' + imgs + nav + "</div>" + dots + "</div>");
+      var wrap = img.parentNode.querySelector(".hero-show"), box = wrap.querySelector(".hw-slides");
+      var slideImgs = box.querySelectorAll("img"), dotBtns = wrap.querySelectorAll(".hw-dots button");
+      if (slideImgs.length < 2) return;
+      var durArr = String(box.getAttribute("data-durs")).split(",").map(Number);
+      var n = 0, timer = null, paused = false;
+      var show2 = function (k) {
+        n = (k + slideImgs.length) % slideImgs.length;
+        for (var j = 0; j < slideImgs.length; j++) slideImgs[j].classList.toggle("on", j === n);
+        for (var q = 0; q < dotBtns.length; q++) dotBtns[q].setAttribute("aria-current", q === n ? "true" : "false");
+      };
+      var tick = function () {
+        clearTimeout(timer); timer = null;
+        if (!paused) timer = setTimeout(function () { show2(n + 1); tick(); }, durArr[n] || 30000);
+      };
+      var prev = wrap.querySelector(".hw-prev"), next = wrap.querySelector(".hw-next");
+      if (prev) prev.addEventListener("click", function () { show2(n - 1); tick(); });
+      if (next) next.addEventListener("click", function () { show2(n + 1); tick(); });
+      dotBtns.forEach(function (b, k) { b.addEventListener("click", function () { show2(k); tick(); }); });
+      box.addEventListener("click", function (e) { if (e.target.tagName === "IMG") { paused = !paused; tick(); } });
+      show2(0); tick();
     })
-    .catch(function () { /* no widgets: the section stays hidden */ });
+    .catch(function () { /* the illustration stays if widgets cannot load */ });
 })();
 </script>
 <script>

@@ -770,7 +770,7 @@ a.card:hover{transform:translate(-2px,-2px);box-shadow:8px 8px 0 var(--hi);color
     if (error) { box.innerHTML = `<p class="err">${esc(error.message)} (Has the round 42 widgets SQL been run?)</p>`; return; }
     wgWidgets = (data || []).map(w => ({ ...w, slides: (w.slides || []).slice().sort((a, b) => a.position - b.position) }));
     box.innerHTML = `<h1 style="font-size:2rem">Home page widgets</h1>
-      <p class="muted">Widgets appear on the home page below the banner, in the order listed here (use Move up and Move down). A slideshow plays its images one after another. Leave dates empty to show always.</p>
+      <p class="muted">The home page picture (top of the page, in place of the illustration) shows the FIRST live slideshow in this list, one slide at a time. Use Move up and Move down to choose which slideshow is first. Other widget types are not shown on the home page. Leave dates empty to show always.</p>
       ${WG_FORM}
       <h2 style="margin-top:22px">Widgets, in home page order</h2>
       <div id="wg-list">${wgWidgets.map((w, i) => `<article data-wid="${esc(w.id)}" style="margin-top:8px;padding:12px;border:1px solid #ddd;border-radius:8px">
