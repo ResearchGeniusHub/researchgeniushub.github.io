@@ -699,62 +699,158 @@ a.card:hover{transform:translate(-2px,-2px);box-shadow:8px 8px 0 var(--hi);color
 
 
   /* ---------- Home page widgets (admin): daily images, videos and text cards ---------- */
-  const WKIND = { image: "Daily image", video: "Video", text: "Text card" };
-  async function loadWidgets() {
-    const box = $("#v-widgets"); box.innerHTML = `<p class="muted">Loading...</p>`;
-    const { data, error } = await sb.from("site_widgets").select("*").order("position").order("created_at", { ascending: false });
-    if (error) { box.innerHTML = `<p class="err">${esc(error.message)}</p>`; return; }
-    box.innerHTML = `<h1 style="font-size:2rem">Home page widgets</h1>
-      <p class="muted">Add a daily image, an illustrative video or a text card. They appear on the home page below the banner. For a daily image, set "Show from" to the day it should appear: the latest live image is shown. Leave dates empty to show always. Videos can be a YouTube or Vimeo link, or a short video file (up to 50 MB).</p>
-      <form id="wg-form" class="panel" style="margin-bottom:18px">
-        <div class="two"><div class="f"><label>Type</label><select name="kind"><option value="image">Daily image</option><option value="video">Video</option><option value="text">Text card</option></select></div>
+  /* ---------- home page widgets: slideshows, images, videos, text cards. Order = Position, set with Move up / Move down ---------- */
+  const WKIND = { slideshow: "Slideshow", image: "Daily image", video: "Video", text: "Text card" };
+  let wgWidgets = [], wgSlides = [], wgOriginal = [], wgEditing = null, wgMedia = "";
+  const WG_FORM = `<form id="wg-form" class="panel" style="margin-bottom:18px">
+      <div class="two"><div class="f"><label>Type</label><select name="kind" id="wg-kind"><option value="slideshow">Slideshow (several images, one after another)</option><option value="image">Daily image (one image; the latest live one shows)</option><option value="video">Video</option><option value="text">Text card</option></select></div>
         <div class="f"><label>Position (lower numbers show first)</label><input name="position" type="number" value="0"></div></div>
-        <div class="f"><label>Title</label><input name="title" maxlength="120"></div>
-        <div class="f"><label>Text (optional)</label><textarea name="body" rows="3"></textarea></div>
-        <div class="two"><div class="f"><label>Image or video file (optional)</label><input type="file" name="file" accept="image/*,video/mp4,video/webm,video/quicktime"></div>
-        <div class="f"><label>Or a YouTube / Vimeo link, or an image link</label><input name="url" placeholder="https://www.youtube.com/watch?v=..."></div></div>
-        <div class="two"><div class="f"><label>Button link (optional)</label><input name="link_url" placeholder="https://..."></div><div class="f"><label>Button label</label><input name="link_label" placeholder="Read more"></div></div>
-        <div class="two"><div class="f"><label>Show from</label><input type="date" name="show_from"></div><div class="f"><label>Show until</label><input type="date" name="show_until"></div></div>
-        <label style="font-weight:400"><input type="checkbox" name="active" checked> Show on the home page</label>
-        <p class="err"></p><button class="btn block" type="submit">Add to home page</button></form>
-      <div id="wg-list">${(data || []).map(w => `<article class="order" data-wid="${esc(w.id)}" style="margin-top:8px">
-        <strong>${esc(WKIND[w.kind] || w.kind)}</strong> &middot; ${esc(w.title || "(no title)")} &middot; position ${w.position} &middot; <b>${w.active ? "ON" : "OFF"}</b>
-        <div class="small muted">${w.show_from ? "From " + esc(w.show_from) : "Always from the start"}${w.show_until ? " until " + esc(w.show_until) : ""}${w.media_url ? " &middot; media attached" : ""}</div>
-        <div style="margin-top:6px"><button type="button" class="btn sm alt" data-wtog="${esc(w.id)}" data-on="${w.active ? 1 : 0}">${w.active ? "Hide" : "Show"}</button>
-        <button type="button" class="btn sm alt" data-wdel="${esc(w.id)}">Delete</button></div></article>`).join("") || '<p class="muted">No widgets yet.</p>'}</div>`;
-    const form = $("#wg-form");
-    form.addEventListener("submit", async e => {
-      e.preventDefault(); const btn = form.querySelector("button"), err = form.querySelector(".err"); err.textContent = "";
-      const kind = form.kind.value, file = form.file.files[0], url = form.url.value.trim();
-      if (!["image", "video", "text"].includes(kind)) return;
-      if (file && file.size > 50 * 1024 * 1024) { err.textContent = "That file is larger than 50 MB. Use a YouTube or Vimeo link instead."; return; }
-      if (kind === "video" && !file && !url) { err.textContent = "Add a video file or a YouTube / Vimeo link."; return; }
-      if (kind === "image" && !file && !url) { err.textContent = "Add an image file or an image link."; return; }
-      if (kind === "text" && !form.title.value.trim() && !form.body.value.trim()) { err.textContent = "Add a title or some text."; return; }
-      if (url && !/^https?:\/\//i.test(url)) { err.textContent = "Links must start with https://"; return; }
-      btn.disabled = true;
-      try {
-        let media = url;
-        if (file) {
-          const path = kind + "/" + Date.now() + "-" + file.name.replace(/[^\w.\-]+/g, "_");
-          const up = await sb.storage.from("site-media").upload(path, file, { cacheControl: "3600", contentType: file.type || undefined });
-          if (up.error) throw up.error;
-          media = sb.storage.from("site-media").getPublicUrl(path).data.publicUrl;
-        }
-        const row = { kind, title: form.title.value.trim(), body: form.body.value.trim(), media_url: media || "", link_url: form.link_url.value.trim(), link_label: form.link_label.value.trim(), position: Number(form.position.value) || 0, active: form.active.checked, show_from: form.show_from.value || null, show_until: form.show_until.value || null };
-        const r = await sb.from("site_widgets").insert(row); if (r.error) throw r.error;
-        await loadWidgets();
-      } catch (x) { err.textContent = x.message || "Could not save."; btn.disabled = false; }
-    });
-    box.querySelector("#wg-list").addEventListener("click", async e => {
-      const t = e.target.closest("button"); if (!t) return;
-      if (t.dataset.wtog) { const r = await sb.from("site_widgets").update({ active: t.dataset.on !== "1" }).eq("id", t.dataset.wtog); if (r.error) return alert(r.error.message); loadWidgets(); }
-      if (t.dataset.wdel) { if (!confirm("Delete this widget from the home page?")) return; const r = await sb.from("site_widgets").delete().eq("id", t.dataset.wdel); if (r.error) return alert(r.error.message); loadWidgets(); }
-    });
+      <div class="f"><label>Title</label><input name="title" maxlength="120"></div>
+      <div class="f"><label>Text (optional)</label><textarea name="body" rows="3"></textarea></div>
+      <div class="two"><div class="f"><label id="wg-file-label">Images</label><input type="file" name="file" accept="image/*"></div>
+        <div class="f"><label>Or a YouTube / Vimeo link, or an image link</label><input name="url" placeholder="https://..."></div></div>
+      <div id="wg-slides"></div>
+      <div class="two"><div class="f" id="wg-secs-wrap"><label>Seconds per slide</label><input name="slide_seconds" type="number" min="2" max="30" value="5"></div><div class="f"><label>Button label</label><input name="link_label" placeholder="Read more"></div></div>
+      <div class="f"><label>Button link (optional)</label><input name="link_url" placeholder="https://..."></div>
+      <div class="two"><div class="f"><label>Show from</label><input type="date" name="show_from"></div><div class="f"><label>Show until</label><input type="date" name="show_until"></div></div>
+      <label style="font-weight:400"><input type="checkbox" name="active" checked> Show on the home page</label>
+      <p class="err"></p>
+      <button class="btn block" type="submit" id="wg-submit">Add to home page</button>
+      <button type="button" class="btn block alt" id="wg-cancel" hidden>Cancel editing</button></form>`;
+
+  function wgSyncKind() {
+    const f = $("#wg-form"); if (!f) return;
+    const kind = f.kind.value;
+    f.file.multiple = kind === "slideshow";
+    f.file.accept = kind === "video" ? "image/*,video/mp4,video/webm,video/quicktime" : "image/*";
+    $("#wg-file-label").textContent = kind === "slideshow" ? "Add images to the slideshow (choose one or several)" : kind === "video" ? "Video file (optional, up to 50 MB)" : kind === "image" ? "Image file (optional)" : "Image (optional, not needed for a text card)";
+    $("#wg-secs-wrap").hidden = kind !== "slideshow";
+    wgRenderSlides();
+  }
+  function wgRenderSlides() {
+    const el = $("#wg-slides"); if (!el) return;
+    if ($("#wg-form").kind.value !== "slideshow") { el.innerHTML = ""; return; }
+    el.innerHTML = `<p class="small" style="margin:12px 0 4px"><b>Slides, in order. The top slide shows first.</b>${wgSlides.length ? "" : " No slides yet: choose images above."}</p>` +
+      wgSlides.map((s, i) => `<div style="display:flex;gap:10px;align-items:center;margin-top:6px;flex-wrap:wrap">
+        <img src="${esc(s.media_url)}" alt="" style="width:90px;height:56px;object-fit:cover;border-radius:6px">
+        <span class="small" style="flex:1">Slide ${i + 1}${s.file ? " (not saved yet)" : ""}</span>
+        <button type="button" class="btn sm alt" data-sup="${i}" ${i === 0 ? "disabled" : ""}>Move up</button>
+        <button type="button" class="btn sm alt" data-sdown="${i}" ${i === wgSlides.length - 1 ? "disabled" : ""}>Move down</button>
+        <button type="button" class="btn sm alt" data-sdel="${i}">Remove</button></div>`).join("");
+  }
+  function wgReset() {
+    const f = $("#wg-form"); f.reset();
+    wgEditing = null; wgSlides = []; wgOriginal = []; wgMedia = "";
+    $("#wg-submit").textContent = "Add to home page"; $("#wg-cancel").hidden = true;
+    wgSyncKind();
+  }
+  function wgFill(w) {
+    const f = $("#wg-form");
+    f.kind.value = w.kind; f.position.value = w.position; f.title.value = w.title || ""; f.body.value = w.body || "";
+    f.url.value = ""; wgMedia = w.kind === "slideshow" ? "" : (w.media_url || "");
+    f.link_url.value = w.link_url || ""; f.link_label.value = w.link_label || "";
+    f.slide_seconds.value = w.slide_seconds || 5; f.show_from.value = w.show_from || ""; f.show_until.value = w.show_until || ""; f.active.checked = !!w.active;
+    wgSlides = (w.slides || []).slice().sort((a, b) => a.position - b.position).map(s => ({ id: s.id, media_url: s.media_url, file: null }));
+    wgOriginal = wgSlides.map(s => s.id);
+    wgEditing = w.id; $("#wg-submit").textContent = "Save changes"; $("#wg-cancel").hidden = false;
+    wgSyncKind(); f.scrollIntoView({ behavior: "smooth" });
   }
 
-  /* ---------- testimonials (admin and staff): reviews sent online to approve, and testimonies you add ---------- */
-  const TSERV = ["Research support", "Essay guidance and model answers", "Data analysis guidance", "Reports, essays and business plans", "Dissertation or proposal support", "Editing and proofreading", "PowerPoint presentation", "Online coaching", "AI content removal", "Assignment guides", "Other"];
+  async function loadWidgets() {
+    const box = $("#v-widgets"); box.innerHTML = `<p class="muted">Loading...</p>`;
+    const { data, error } = await sb.from("site_widgets").select("*, slides:site_widget_slides(id,media_url,position)").order("position").order("created_at", { ascending: false });
+    if (error) { box.innerHTML = `<p class="err">${esc(error.message)} (Has the round 42 widgets SQL been run?)</p>`; return; }
+    wgWidgets = (data || []).map(w => ({ ...w, slides: (w.slides || []).slice().sort((a, b) => a.position - b.position) }));
+    box.innerHTML = `<h1 style="font-size:2rem">Home page widgets</h1>
+      <p class="muted">Widgets appear on the home page below the banner, in the order listed here (use Move up and Move down). A slideshow plays its images one after another. Leave dates empty to show always.</p>
+      ${WG_FORM}
+      <h2 style="margin-top:22px">Widgets, in home page order</h2>
+      <div id="wg-list">${wgWidgets.map((w, i) => `<article data-wid="${esc(w.id)}" style="margin-top:8px;padding:12px;border:1px solid #ddd;border-radius:8px">
+        <strong>${esc(WKIND[w.kind] || w.kind)}</strong> &middot; ${esc(w.title || "(no title)")} &middot; <b>${w.active ? "ON" : "OFF"}</b>
+        <div class="small muted">Order ${i + 1}${w.kind === "slideshow" ? " &middot; " + w.slides.length + " slides, " + (w.slide_seconds || 5) + " seconds each" : ""}${w.show_from ? " &middot; from " + esc(w.show_from) : " &middot; always"}${w.show_until ? " until " + esc(w.show_until) : ""}</div>
+        <div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap">
+          <button type="button" class="btn sm alt" data-wup="${esc(w.id)}" ${i === 0 ? "disabled" : ""}>Move up</button>
+          <button type="button" class="btn sm alt" data-wdown="${esc(w.id)}" ${i === wgWidgets.length - 1 ? "disabled" : ""}>Move down</button>
+          <button type="button" class="btn sm alt" data-wedit="${esc(w.id)}">Edit</button>
+          <button type="button" class="btn sm alt" data-wtog="${esc(w.id)}" data-on="${w.active ? 1 : 0}">${w.active ? "Hide" : "Show"}</button>
+          <button type="button" class="btn sm alt" data-wdel="${esc(w.id)}">Delete</button></div></article>`).join("") || '<p class="muted">No widgets yet.</p>'}</div>`;
+
+    const f = $("#wg-form");
+    f.kind.addEventListener("change", wgSyncKind);
+    f.file.addEventListener("change", () => {
+      const chosen = [...f.file.files];
+      if (!chosen.length) return;
+      if (f.kind.value === "slideshow") {
+        chosen.forEach(file => wgSlides.push({ id: null, media_url: URL.createObjectURL(file), file }));
+        f.file.value = ""; wgRenderSlides();
+      }
+    });
+    $("#wg-slides").addEventListener("click", e => {
+      const t = e.target.closest("button"); if (!t) return;
+      const mv = (i, j) => { [wgSlides[i], wgSlides[j]] = [wgSlides[j], wgSlides[i]]; wgRenderSlides(); };
+      if (t.dataset.sup) mv(+t.dataset.sup, +t.dataset.sup - 1);
+      if (t.dataset.sdown) mv(+t.dataset.sdown, +t.dataset.sdown + 1);
+      if (t.dataset.sdel) { wgSlides.splice(+t.dataset.sdel, 1); wgRenderSlides(); }
+    });
+    $("#wg-cancel").addEventListener("click", wgReset);
+
+    f.addEventListener("submit", async e => {
+      e.preventDefault();
+      const btn = $("#wg-submit"), err = f.querySelector(".err"); err.textContent = "";
+      const kind = f.kind.value, pickedFile = f.file.files[0] || null, url = f.url.value.trim();
+      const newFiles = wgSlides.filter(s => s.file).map(s => s.file).concat(kind !== "slideshow" && pickedFile ? [pickedFile] : []);
+      if (newFiles.some(x => x.size > 50 * 1048576)) { err.textContent = "A file is larger than 50 MB. Use a smaller file or a YouTube or Vimeo link."; return; }
+      if (url && !/^https?:\/\//i.test(url)) { err.textContent = "Links must start with https://"; return; }
+      if (kind === "slideshow" && !wgSlides.length) { err.textContent = "Add at least one image to the slideshow."; return; }
+      if ((kind === "image" || kind === "video") && !pickedFile && !url && !wgMedia) { err.textContent = kind === "video" ? "Add a video file or a YouTube / Vimeo link." : "Add an image file or an image link."; return; }
+      if (kind === "text" && !f.title.value.trim() && !f.body.value.trim()) { err.textContent = "Add a title or some text."; return; }
+      btn.disabled = true;
+      try {
+        const bucket = sb.storage.from("site-media");
+        const upload = async file => {
+          const path = kind + "/" + Date.now() + "-" + Math.random().toString(36).slice(2, 7) + "-" + file.name.replace(/[^\w.\-]+/g, "_");
+          const up = await bucket.upload(path, file, { cacheControl: "3600", contentType: file.type || undefined });
+          if (up.error) throw up.error;
+          return bucket.getPublicUrl(path).data.publicUrl;
+        };
+        const keptSlides = kind === "slideshow" ? wgSlides : [];
+        for (const s of keptSlides) { if (s.file) { s.media_url = await upload(s.file); s.file = null; } }
+        let media = null;
+        if (kind === "image" || kind === "video") media = pickedFile ? await upload(pickedFile) : (url || wgMedia || null);
+        const row = { kind, title: f.title.value.trim(), body: f.body.value.trim(), media_url: media, link_url: f.link_url.value.trim(), link_label: f.link_label.value.trim(), position: Number(f.position.value) || 0, active: f.active.checked, show_from: f.show_from.value || null, show_until: f.show_until.value || null, slide_seconds: Math.min(30, Math.max(2, Number(f.slide_seconds.value) || 5)) };
+        let id = wgEditing;
+        if (id) { const r = await sb.from("site_widgets").update(row).eq("id", id); if (r.error) throw r.error; }
+        else { const r = await sb.from("site_widgets").insert(row).select("id").single(); if (r.error) throw r.error; id = r.data.id; }
+        const keep = keptSlides.filter(s => s.id).map(s => s.id);
+        const gone = wgOriginal.filter(x => !keep.includes(x));
+        if (gone.length) { const r = await sb.from("site_widget_slides").delete().in("id", gone); if (r.error) throw r.error; }
+        for (let i = 0; i < keptSlides.length; i++) {
+          const s = keptSlides[i];
+          if (s.id) { const r = await sb.from("site_widget_slides").update({ position: i }).eq("id", s.id); if (r.error) throw r.error; }
+          else { const r = await sb.from("site_widget_slides").insert({ widget_id: id, media_url: s.media_url, position: i }); if (r.error) throw r.error; }
+        }
+        wgReset(); await loadWidgets();
+      } catch (x) { err.textContent = x.message || "Could not save. Please try again."; btn.disabled = false; }
+    });
+
+    $("#wg-list").addEventListener("click", async e => {
+      const t = e.target.closest("button"); if (!t) return;
+      if (t.dataset.wedit) { const w = wgWidgets.find(x => x.id === t.dataset.wedit); if (w) wgFill(w); return; }
+      if (t.dataset.wup || t.dataset.wdown) {
+        const id = t.dataset.wup || t.dataset.wdown, i = wgWidgets.findIndex(x => x.id === id), j = i + (t.dataset.wup ? -1 : 1);
+        if (i < 0 || j < 0 || j >= wgWidgets.length) return;
+        const order = wgWidgets.slice(); [order[i], order[j]] = [order[j], order[i]];
+        for (let k = 0; k < order.length; k++) {
+          if (order[k].position !== k) { const r = await sb.from("site_widgets").update({ position: k }).eq("id", order[k].id); if (r.error) return alert(r.error.message); }
+        }
+        loadWidgets(); return;
+      }
+      if (t.dataset.wtog) { const r = await sb.from("site_widgets").update({ active: t.dataset.on !== "1" }).eq("id", t.dataset.wtog); if (r.error) return alert(r.error.message); loadWidgets(); return; }
+      if (t.dataset.wdel) { if (!confirm("Delete this widget from the home page?")) return; const r = await sb.from("site_widgets").delete().eq("id", t.dataset.wdel); if (r.error) return alert(r.error.message); loadWidgets(); }
+    });
+    wgSyncKind();
+  }
+
   async function loadTestimonials() {
     const box = $("#v-testimonials"); box.innerHTML = `<p class="muted">Loading...</p>`;
     const { data, error } = await sb.from("testimonials").select("*").order("created_at", { ascending: false });

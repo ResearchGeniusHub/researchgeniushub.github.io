@@ -436,6 +436,17 @@ a.card:hover{transform:translate(-2px,-2px);box-shadow:8px 8px 0 var(--hi);color
 </style>
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "WebSite", "name": "Research Genius Hub", "alternateName": ["Research Genius Hub", "RGH"], "url": "https://researchgeniushub.github.io/"}</script>
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "ProfessionalService", "name": "Research Genius Hub", "url": "https://researchgeniushub.github.io/", "email": "researchgeniushub@gmail.com", "description": "Dissertation, SPSS, NVivo and Excel analysis, essay and report support, proofreading and online coaching for students at every level of higher education.", "image": "https://researchgeniushub.github.io/og-image.png", "slogan": "We transform your academic performance worries into clearer, stronger work.", "address": {"@type": "PostalAddress", "streetAddress": "Blessed House, Opposite Garden City Mall, Office 61", "addressLocality": "Nairobi"}, "areaServed": "Worldwide", "knowsAbout": ["Dissertation support", "SPSS data analysis", "NVivo", "Excel", "Academic writing", "Research methods", "Proofreading"]}</script>
+<style>
+/* home page slideshows (round 42) */
+.hw-slides{position:relative;overflow:hidden;aspect-ratio:16/10;background:#eee}
+.hw-slides img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .6s ease}
+.hw-slides img.on{opacity:1}
+.hw-nav{position:absolute;top:50%;transform:translateY(-50%);z-index:2;width:38px;height:38px;border-radius:50%;border:0;background:rgba(0,0,0,.45);color:#fff;font-size:24px;line-height:1;cursor:pointer}
+.hw-prev{left:8px}.hw-next{right:8px}
+.hw-dots{display:flex;justify-content:center;gap:8px;padding:10px 0 0}
+.hw-dots button{width:11px;height:11px;border-radius:50%;border:0;padding:0;background:#c9c2b8;cursor:pointer}
+.hw-dots button[aria-current="true"]{background:#333}
+</style>
 </head>
 <body>
 <header class="site-header"><div class="wrap">
@@ -1240,27 +1251,41 @@ a.card:hover{transform:translate(-2px,-2px);box-shadow:8px 8px 0 var(--hi);color
   }
   var d = new Date(), today = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
   var live = function (r) { return (!r.show_from || r.show_from <= today) && (!r.show_until || r.show_until >= today); };
-  fetch(SB.url + "/rest/v1/site_widgets?select=*&active=eq.true&order=position.asc,created_at.desc", { headers: { apikey: SB.anonKey, Authorization: "Bearer " + SB.anonKey } })
+  fetch(SB.url + "/rest/v1/site_widgets?select=*,slides:site_widget_slides(media_url,position)&active=eq.true&order=position.asc,created_at.desc", { headers: { apikey: SB.anonKey, Authorization: "Bearer " + SB.anonKey } })
     .then(function (r) { return r.ok ? r.json() : []; })
     .then(function (rows) {
-      rows = (rows || []).filter(live);
-      var images = rows.filter(function (r) { return r.kind === "image" && r.media_url; })
-        .sort(function (a, b) { return String(b.show_from || "").localeCompare(String(a.show_from || "")); });
-      var pick = [];
-      if (images.length) pick.push(images[0]);                       // the daily image: the latest one that is live today
-      rows.forEach(function (r) { if (r.kind === "video" && r.media_url) pick.push(r); });
-      rows.forEach(function (r) { if (r.kind === "text") pick.push(r); });
-      pick = pick.slice(0, 8);
+      rows = (rows || []).filter(live).map(function (r) {
+        r.slides = (r.slides || []).slice().sort(function (x, y) { return x.position - y.position; });
+        return r;
+      });
+      var dailyImage = rows.filter(function (r) { return r.kind === "image" && r.media_url; })
+        .sort(function (a, b) { return String(b.show_from || "").localeCompare(String(a.show_from || "")); })[0];
+      // home page order = Position set in admin (lowest first); the daily image is the latest live one
+      var pick = rows.filter(function (r) {
+        if (r.kind === "slideshow") return r.slides.length > 0;
+        if (r.kind === "image") return r === dailyImage;
+        if (r.kind === "video") return !!r.media_url;
+        return r.kind === "text";
+      }).slice(0, 8);
       if (!pick.length) return;
       grid.innerHTML = pick.map(function (r) {
         var link = r.link_url ? safeUrl(r.link_url) : "";
         var lbl = esc(r.link_label || "Read more");
         var tail = link ? '<a class="hw-link" href="' + esc(link) + '" target="_blank" rel="noopener">' + lbl + " &rarr;</a>" : "";
         var body = '<div class="hw-body">' + (r.title ? "<h3>" + esc(r.title) + "</h3>" : "") + (r.body ? "<p>" + esc(r.body) + "</p>" : "") + tail + "</div>";
+        if (r.kind === "slideshow") {
+          var srcs = r.slides.map(function (x) { return safeUrl(x.media_url); }).filter(Boolean);
+          if (!srcs.length) return "";
+          var secs = Math.min(30, Math.max(2, Number(r.slide_seconds) || 5));
+          var imgs = srcs.map(function (u, k) { return '<img src="' + esc(u) + '" alt="' + esc((r.title || "Slideshow") + " (" + (k + 1) + " of " + srcs.length + ")") + '" loading="lazy"' + (k === 0 ? ' class="on"' : "") + ">"; }).join("");
+          var nav = srcs.length > 1 ? '<button type="button" class="hw-nav hw-prev" aria-label="Previous slide">&#8249;</button><button type="button" class="hw-nav hw-next" aria-label="Next slide">&#8250;</button>' : "";
+          var dots = srcs.length > 1 ? '<div class="hw-dots">' + srcs.map(function (u, k) { return '<button type="button" aria-label="Slide ' + (k + 1) + '"></button>'; }).join("") + "</div>" : "";
+          return '<figure class="hw-card"><div class="hw-slides" data-secs="' + secs + '">' + imgs + nav + "</div>" + dots + body + "</figure>";
+        }
         if (r.kind === "image") {
           var src = safeUrl(r.media_url);
           if (!src) return "";
-          return '<figure class="hw-card">' + '<img src="' + esc(src) + '" alt="' + esc(r.title || "Daily image") + '" loading="lazy">' + body + "</figure>";
+          return '<figure class="hw-card"><img src="' + esc(src) + '" alt="' + esc(r.title || "Daily image") + '" loading="lazy">' + body + "</figure>";
         }
         if (r.kind === "video") {
           var e = embed(r.media_url);
@@ -1269,8 +1294,25 @@ a.card:hover{transform:translate(-2px,-2px);box-shadow:8px 8px 0 var(--hi);color
           if (!v) return "";
           return '<figure class="hw-card"><video controls preload="metadata" playsinline src="' + esc(v) + '"></video>' + body + "</figure>";
         }
-        return '<article class="hw-card hw-card--text">' + body.replace('<div class="hw-body">', '<div class="hw-body">') + "</article>";
+        return '<article class="hw-card hw-card--text">' + body + "</article>";
       }).join("");
+      // start each slideshow: automatic change, arrows and dots
+      grid.querySelectorAll(".hw-slides").forEach(function (box) {
+        var fig = box.parentNode, imgs = box.querySelectorAll("img"), dots = fig.querySelectorAll(".hw-dots button");
+        if (imgs.length < 2) return;
+        var n = 0, secs = Number(box.getAttribute("data-secs")) || 5, timer = null;
+        var show = function (k) {
+          n = (k + imgs.length) % imgs.length;
+          for (var j = 0; j < imgs.length; j++) imgs[j].classList.toggle("on", j === n);
+          for (var q = 0; q < dots.length; q++) dots[q].setAttribute("aria-current", q === n ? "true" : "false");
+        };
+        var start = function () { clearInterval(timer); timer = setInterval(function () { show(n + 1); }, secs * 1000); };
+        var prev = fig.querySelector(".hw-prev"), next = fig.querySelector(".hw-next");
+        if (prev) prev.addEventListener("click", function () { show(n - 1); start(); });
+        if (next) next.addEventListener("click", function () { show(n + 1); start(); });
+        dots.forEach(function (d, k) { d.addEventListener("click", function () { show(k); start(); }); });
+        show(0); start();
+      });
       sec.hidden = false;
     })
     .catch(function () { /* no widgets: the section stays hidden */ });
