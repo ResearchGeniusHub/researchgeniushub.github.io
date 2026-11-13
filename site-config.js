@@ -13,20 +13,20 @@ window.RGH = {
 
   // ---- Pricing (GBP) ----
   wordsPerPage: 275,
-  aiRemovalRate: 7,               // per page, flat, any deadline
+  aiRemovalRate: 5.25,               // per page, flat, any deadline
   // Undergraduate and Masters prices per page
   tiers: [
-    { id: "urgent",  label: "Under 24 hours",        rate: 15 },
-    { id: "oneday",  label: "1 to 2 days",           rate: 13 },
-    { id: "standard",label: "2 to 4 days",           rate: 12 },
-    { id: "relaxed", label: "5 days or more",        rate: 10 }
+    { id: "urgent",  label: "Under 24 hours",        rate: 11.25 },
+    { id: "oneday",  label: "1 to 2 days",           rate: 9.75 },
+    { id: "standard",label: "2 to 4 days",           rate: 9 },
+    { id: "relaxed", label: "5 days or more",        rate: 7.5 }
   ],
   // PhD-level prices per page (same deadline bands)
   tiersPhd: [
-    { id: "urgent",  label: "Under 24 hours",        rate: 20 },
-    { id: "oneday",  label: "1 to 2 days",           rate: 17 },
-    { id: "standard",label: "2 to 4 days",           rate: 15 },
-    { id: "relaxed", label: "5 days or more",        rate: 13 }
+    { id: "urgent",  label: "Under 24 hours",        rate: 15 },
+    { id: "oneday",  label: "1 to 2 days",           rate: 12.75 },
+    { id: "standard",label: "2 to 4 days",           rate: 11.25 },
+    { id: "relaxed", label: "5 days or more",        rate: 9.75 }
   ],
   // Approximate display rates only (1 GBP = X). The live site refreshes these automatically when it can.
   // Rates below: ECB reference rates, 23 Oct 2026. Update them now and then.
@@ -70,7 +70,7 @@ window.RGH = {
 
   // ---- Online coaching ----
   // 1 hour = first rate. More than 1 hour = additional rate for EVERY hour (2 hours = 2 x 13).
-  coaching: { first: 15, additional: 13, noticeHours: 3 },   // GBP per hour; minimum notice before the lesson
+  coaching: { first: 11.25, additional: 9.75, noticeHours: 3 },   // GBP per hour; minimum notice before the lesson
 
   // ---- Student reviews ----
   // Add REAL reviews only, with the student's permission. The Reviews section stays hidden while this list is empty.
@@ -91,7 +91,7 @@ window.RGH = {
   services: ["Research support", "Essay guidance and model answer", "Report or business plan", "Assignment guide", "Editing and proofreading", "Dissertation or proposal support", "Data analysis guidance (Excel, SPSS, NVivo)", "PowerPoint presentation", "AI content removal", "Full sample access", "Online coaching", "Journal publication guidance"],
 
   // ---- Sample access ----
-  samplePerPage: 2,               // minimum GBP per page. Each sample now has its own rate, set in Admin > Samples (from £2)
+  samplePerPage: 1,               // minimum per page (shown as "from $1"). Each sample has its own rate, set in Admin > Samples
 
   // ---- Accounts and file uploads ----
   // Leave blank to run in demo mode (data saved in the visitor's own browser only).
