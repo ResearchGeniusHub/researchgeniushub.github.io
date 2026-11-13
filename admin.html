@@ -710,7 +710,7 @@ a.card:hover{transform:translate(-2px,-2px);box-shadow:8px 8px 0 var(--hi);color
       <div class="two"><div class="f"><label id="wg-file-label">Images</label><input type="file" name="file" accept="image/*"></div>
         <div class="f"><label>Or a YouTube / Vimeo link, or an image link</label><input name="url" placeholder="https://..."></div></div>
       <div id="wg-slides"></div>
-      <div class="two"><div class="f" id="wg-secs-wrap"><label>Seconds per slide</label><input name="slide_seconds" type="number" min="2" max="30" value="5"></div><div class="f"><label>Button label</label><input name="link_label" placeholder="Read more"></div></div>
+      <div class="two"><div class="f" id="wg-secs-wrap"><label>Seconds per slide (default; you can set each slide below)</label><input name="slide_seconds" type="number" min="2" max="300" value="30"></div><div class="f"><label>Button label</label><input name="link_label" placeholder="Read more"></div></div>
       <div class="f"><label>Button link (optional)</label><input name="link_url" placeholder="https://..."></div>
       <div class="two"><div class="f"><label>Show from</label><input type="date" name="show_from"></div><div class="f"><label>Show until</label><input type="date" name="show_until"></div></div>
       <label style="font-weight:400"><input type="checkbox" name="active" checked> Show on the home page</label>
@@ -734,6 +734,7 @@ a.card:hover{transform:translate(-2px,-2px);box-shadow:8px 8px 0 var(--hi);color
       wgSlides.map((s, i) => `<div style="display:flex;gap:10px;align-items:center;margin-top:6px;flex-wrap:wrap">
         <img src="${esc(s.media_url)}" alt="" style="width:90px;height:56px;object-fit:cover;border-radius:6px">
         <span class="small" style="flex:1">Slide ${i + 1}${s.file ? " (not saved yet)" : ""}</span>
+        <label class="small">Seconds <input type="number" min="2" max="300" data-sec="${i}" value="${s.seconds || ""}" placeholder="${esc($("#wg-form").slide_seconds.value)}" style="width:72px"></label>
         <button type="button" class="btn sm alt" data-sup="${i}" ${i === 0 ? "disabled" : ""}>Move up</button>
         <button type="button" class="btn sm alt" data-sdown="${i}" ${i === wgSlides.length - 1 ? "disabled" : ""}>Move down</button>
         <button type="button" class="btn sm alt" data-sdel="${i}">Remove</button></div>`).join("");
@@ -750,15 +751,22 @@ a.card:hover{transform:translate(-2px,-2px);box-shadow:8px 8px 0 var(--hi);color
     f.url.value = ""; wgMedia = w.kind === "slideshow" ? "" : (w.media_url || "");
     f.link_url.value = w.link_url || ""; f.link_label.value = w.link_label || "";
     f.slide_seconds.value = w.slide_seconds || 5; f.show_from.value = w.show_from || ""; f.show_until.value = w.show_until || ""; f.active.checked = !!w.active;
-    wgSlides = (w.slides || []).slice().sort((a, b) => a.position - b.position).map(s => ({ id: s.id, media_url: s.media_url, file: null }));
-    wgOriginal = wgSlides.map(s => s.id);
+    if (w.kind === "image" && w.media_url) {
+      // an existing single image: switch to slideshow with this image as slide 1
+      f.kind.value = "slideshow"; f.slide_seconds.value = 30;
+      wgSlides = [{ id: null, media_url: w.media_url, file: null, seconds: null }];
+      wgOriginal = [];
+    } else {
+      wgSlides = (w.slides || []).slice().sort((a, b) => a.position - b.position).map(s => ({ id: s.id, media_url: s.media_url, file: null, seconds: s.seconds || null }));
+      wgOriginal = wgSlides.map(s => s.id);
+    }
     wgEditing = w.id; $("#wg-submit").textContent = "Save changes"; $("#wg-cancel").hidden = false;
     wgSyncKind(); f.scrollIntoView({ behavior: "smooth" });
   }
 
   async function loadWidgets() {
     const box = $("#v-widgets"); box.innerHTML = `<p class="muted">Loading...</p>`;
-    const { data, error } = await sb.from("site_widgets").select("*, slides:site_widget_slides(id,media_url,position)").order("position").order("created_at", { ascending: false });
+    const { data, error } = await sb.from("site_widgets").select("*, slides:site_widget_slides(id,media_url,position,seconds)").order("position").order("created_at", { ascending: false });
     if (error) { box.innerHTML = `<p class="err">${esc(error.message)} (Has the round 42 widgets SQL been run?)</p>`; return; }
     wgWidgets = (data || []).map(w => ({ ...w, slides: (w.slides || []).slice().sort((a, b) => a.position - b.position) }));
     box.innerHTML = `<h1 style="font-size:2rem">Home page widgets</h1>
@@ -767,7 +775,7 @@ a.card:hover{transform:translate(-2px,-2px);box-shadow:8px 8px 0 var(--hi);color
       <h2 style="margin-top:22px">Widgets, in home page order</h2>
       <div id="wg-list">${wgWidgets.map((w, i) => `<article data-wid="${esc(w.id)}" style="margin-top:8px;padding:12px;border:1px solid #ddd;border-radius:8px">
         <strong>${esc(WKIND[w.kind] || w.kind)}</strong> &middot; ${esc(w.title || "(no title)")} &middot; <b>${w.active ? "ON" : "OFF"}</b>
-        <div class="small muted">Order ${i + 1}${w.kind === "slideshow" ? " &middot; " + w.slides.length + " slides, " + (w.slide_seconds || 5) + " seconds each" : ""}${w.show_from ? " &middot; from " + esc(w.show_from) : " &middot; always"}${w.show_until ? " until " + esc(w.show_until) : ""}</div>
+        <div class="small muted">Order ${i + 1}${w.kind === "slideshow" ? " &middot; " + w.slides.length + " slides, " + (w.slide_seconds || 30) + " seconds each (unless a slide has its own)" : ""}${w.show_from ? " &middot; from " + esc(w.show_from) : " &middot; always"}${w.show_until ? " until " + esc(w.show_until) : ""}</div>
         <div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap">
           <button type="button" class="btn sm alt" data-wup="${esc(w.id)}" ${i === 0 ? "disabled" : ""}>Move up</button>
           <button type="button" class="btn sm alt" data-wdown="${esc(w.id)}" ${i === wgWidgets.length - 1 ? "disabled" : ""}>Move down</button>
@@ -791,6 +799,10 @@ a.card:hover{transform:translate(-2px,-2px);box-shadow:8px 8px 0 var(--hi);color
       if (t.dataset.sup) mv(+t.dataset.sup, +t.dataset.sup - 1);
       if (t.dataset.sdown) mv(+t.dataset.sdown, +t.dataset.sdown + 1);
       if (t.dataset.sdel) { wgSlides.splice(+t.dataset.sdel, 1); wgRenderSlides(); }
+    });
+    $("#wg-slides").addEventListener("input", e => {
+      const t = e.target; if (!t.matches || !t.matches("input[data-sec]")) return;
+      const v = Number(t.value); wgSlides[+t.dataset.sec].seconds = t.value && v >= 2 ? Math.min(300, v) : null;
     });
     $("#wg-cancel").addEventListener("click", wgReset);
 
@@ -817,7 +829,7 @@ a.card:hover{transform:translate(-2px,-2px);box-shadow:8px 8px 0 var(--hi);color
         for (const s of keptSlides) { if (s.file) { s.media_url = await upload(s.file); s.file = null; } }
         let media = null;
         if (kind === "image" || kind === "video") media = pickedFile ? await upload(pickedFile) : (url || wgMedia || null);
-        const row = { kind, title: f.title.value.trim(), body: f.body.value.trim(), media_url: media, link_url: f.link_url.value.trim(), link_label: f.link_label.value.trim(), position: Number(f.position.value) || 0, active: f.active.checked, show_from: f.show_from.value || null, show_until: f.show_until.value || null, slide_seconds: Math.min(30, Math.max(2, Number(f.slide_seconds.value) || 5)) };
+        const row = { kind, title: f.title.value.trim(), body: f.body.value.trim(), media_url: media, link_url: f.link_url.value.trim(), link_label: f.link_label.value.trim(), position: Number(f.position.value) || 0, active: f.active.checked, show_from: f.show_from.value || null, show_until: f.show_until.value || null, slide_seconds: Math.min(300, Math.max(2, Number(f.slide_seconds.value) || 30)) };
         let id = wgEditing;
         if (id) { const r = await sb.from("site_widgets").update(row).eq("id", id); if (r.error) throw r.error; }
         else { const r = await sb.from("site_widgets").insert(row).select("id").single(); if (r.error) throw r.error; id = r.data.id; }
@@ -826,8 +838,8 @@ a.card:hover{transform:translate(-2px,-2px);box-shadow:8px 8px 0 var(--hi);color
         if (gone.length) { const r = await sb.from("site_widget_slides").delete().in("id", gone); if (r.error) throw r.error; }
         for (let i = 0; i < keptSlides.length; i++) {
           const s = keptSlides[i];
-          if (s.id) { const r = await sb.from("site_widget_slides").update({ position: i }).eq("id", s.id); if (r.error) throw r.error; }
-          else { const r = await sb.from("site_widget_slides").insert({ widget_id: id, media_url: s.media_url, position: i }); if (r.error) throw r.error; }
+          if (s.id) { const r = await sb.from("site_widget_slides").update({ position: i, seconds: s.seconds || null }).eq("id", s.id); if (r.error) throw r.error; }
+          else { const r = await sb.from("site_widget_slides").insert({ widget_id: id, media_url: s.media_url, position: i, seconds: s.seconds || null }); if (r.error) throw r.error; }
         }
         wgReset(); await loadWidgets();
       } catch (x) { err.textContent = x.message || "Could not save. Please try again."; btn.disabled = false; }

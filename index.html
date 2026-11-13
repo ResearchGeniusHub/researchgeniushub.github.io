@@ -441,6 +441,8 @@ a.card:hover{transform:translate(-2px,-2px);box-shadow:8px 8px 0 var(--hi);color
 .hw-slides{position:relative;overflow:hidden;aspect-ratio:16/10;background:#eee}
 .hw-slides img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .6s ease}
 .hw-slides img.on{opacity:1}
+.hw-slides img{cursor:pointer;pointer-events:none}
+.hw-slides img.on{pointer-events:auto}
 .hw-nav{position:absolute;top:50%;transform:translateY(-50%);z-index:2;width:38px;height:38px;border-radius:50%;border:0;background:rgba(0,0,0,.45);color:#fff;font-size:24px;line-height:1;cursor:pointer}
 .hw-prev{left:8px}.hw-next{right:8px}
 .hw-dots{display:flex;justify-content:center;gap:8px;padding:10px 0 0}
@@ -1251,7 +1253,7 @@ a.card:hover{transform:translate(-2px,-2px);box-shadow:8px 8px 0 var(--hi);color
   }
   var d = new Date(), today = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
   var live = function (r) { return (!r.show_from || r.show_from <= today) && (!r.show_until || r.show_until >= today); };
-  fetch(SB.url + "/rest/v1/site_widgets?select=*,slides:site_widget_slides(media_url,position)&active=eq.true&order=position.asc,created_at.desc", { headers: { apikey: SB.anonKey, Authorization: "Bearer " + SB.anonKey } })
+  fetch(SB.url + "/rest/v1/site_widgets?select=*,slides:site_widget_slides(media_url,position,seconds)&active=eq.true&order=position.asc,created_at.desc", { headers: { apikey: SB.anonKey, Authorization: "Bearer " + SB.anonKey } })
     .then(function (r) { return r.ok ? r.json() : []; })
     .then(function (rows) {
       rows = (rows || []).filter(live).map(function (r) {
@@ -1274,13 +1276,15 @@ a.card:hover{transform:translate(-2px,-2px);box-shadow:8px 8px 0 var(--hi);color
         var tail = link ? '<a class="hw-link" href="' + esc(link) + '" target="_blank" rel="noopener">' + lbl + " &rarr;</a>" : "";
         var body = '<div class="hw-body">' + (r.title ? "<h3>" + esc(r.title) + "</h3>" : "") + (r.body ? "<p>" + esc(r.body) + "</p>" : "") + tail + "</div>";
         if (r.kind === "slideshow") {
-          var srcs = r.slides.map(function (x) { return safeUrl(x.media_url); }).filter(Boolean);
+          var kept = r.slides.filter(function (x) { return safeUrl(x.media_url); });
+          var srcs = kept.map(function (x) { return safeUrl(x.media_url); });
           if (!srcs.length) return "";
-          var secs = Math.min(30, Math.max(2, Number(r.slide_seconds) || 5));
+          var secs = Math.min(300, Math.max(2, Number(r.slide_seconds) || 30));
+          var durs = kept.map(function (x) { return Math.min(300, Math.max(2, Number(x.seconds) || secs)) * 1000; }).join(",");
           var imgs = srcs.map(function (u, k) { return '<img src="' + esc(u) + '" alt="' + esc((r.title || "Slideshow") + " (" + (k + 1) + " of " + srcs.length + ")") + '" loading="lazy"' + (k === 0 ? ' class="on"' : "") + ">"; }).join("");
           var nav = srcs.length > 1 ? '<button type="button" class="hw-nav hw-prev" aria-label="Previous slide">&#8249;</button><button type="button" class="hw-nav hw-next" aria-label="Next slide">&#8250;</button>' : "";
           var dots = srcs.length > 1 ? '<div class="hw-dots">' + srcs.map(function (u, k) { return '<button type="button" aria-label="Slide ' + (k + 1) + '"></button>'; }).join("") + "</div>" : "";
-          return '<figure class="hw-card"><div class="hw-slides" data-secs="' + secs + '">' + imgs + nav + "</div>" + dots + body + "</figure>";
+          return '<figure class="hw-card"><div class="hw-slides" data-durs="' + durs + '">' + imgs + nav + "</div>" + dots + body + "</figure>";
         }
         if (r.kind === "image") {
           var src = safeUrl(r.media_url);
@@ -1296,22 +1300,28 @@ a.card:hover{transform:translate(-2px,-2px);box-shadow:8px 8px 0 var(--hi);color
         }
         return '<article class="hw-card hw-card--text">' + body + "</article>";
       }).join("");
-      // start each slideshow: automatic change, arrows and dots
+      // slideshows: change slide automatically (each slide has its own time, default 30 s).
+      // Pressing a slide pauses it; pressing again resumes. Arrows and dots always work.
       grid.querySelectorAll(".hw-slides").forEach(function (box) {
         var fig = box.parentNode, imgs = box.querySelectorAll("img"), dots = fig.querySelectorAll(".hw-dots button");
         if (imgs.length < 2) return;
-        var n = 0, secs = Number(box.getAttribute("data-secs")) || 5, timer = null;
+        var durs = String(box.getAttribute("data-durs") || "").split(",").map(Number);
+        var n = 0, timer = null, paused = false;
         var show = function (k) {
           n = (k + imgs.length) % imgs.length;
           for (var j = 0; j < imgs.length; j++) imgs[j].classList.toggle("on", j === n);
           for (var q = 0; q < dots.length; q++) dots[q].setAttribute("aria-current", q === n ? "true" : "false");
         };
-        var start = function () { clearInterval(timer); timer = setInterval(function () { show(n + 1); }, secs * 1000); };
+        var tick = function () {
+          clearTimeout(timer); timer = null;
+          if (!paused) timer = setTimeout(function () { show(n + 1); tick(); }, durs[n] || 30000);
+        };
         var prev = fig.querySelector(".hw-prev"), next = fig.querySelector(".hw-next");
-        if (prev) prev.addEventListener("click", function () { show(n - 1); start(); });
-        if (next) next.addEventListener("click", function () { show(n + 1); start(); });
-        dots.forEach(function (d, k) { d.addEventListener("click", function () { show(k); start(); }); });
-        show(0); start();
+        if (prev) prev.addEventListener("click", function () { show(n - 1); tick(); });
+        if (next) next.addEventListener("click", function () { show(n + 1); tick(); });
+        dots.forEach(function (d, k) { d.addEventListener("click", function () { show(k); tick(); }); });
+        box.addEventListener("click", function (e) { if (e.target.tagName === "IMG") { paused = !paused; tick(); } });
+        show(0); tick();
       });
       sec.hidden = false;
     })
